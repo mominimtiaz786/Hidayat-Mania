@@ -1,0 +1,8 @@
+moviepy
+selenium
+pillow
+requests
+json
+pydrive
+ezsheets
+google-auth-oauthlib
