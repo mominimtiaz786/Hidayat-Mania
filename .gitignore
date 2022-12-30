@@ -6,7 +6,6 @@
 *.jpeg
 *.pickle
 *.pkl
-fb_insta_funcs.py
 !vid_record.json
 *youtube.com_cookies.txt
 mycreds.txt

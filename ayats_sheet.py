@@ -19,7 +19,7 @@ TOTAL_HASHTAG_SETS = 10
 ayat_sheet = ss['Hidayat Mania']
 stats = ss['Stats']
 
-PST_TIME_SCHEDULE = [11, 17, 22]
+PST_TIME_SCHEDULE = sorted([11, 17, 22])
 
 ayat_tags_youtube = ["quran"]
 
@@ -41,8 +41,8 @@ def scheduleUpdate(scheduled_last):
     elif (scheduled_last.hour >= PST_TIME_SCHEDULE[-1]):
         schedule_new = scheduled_last.replace(hour = PST_TIME_SCHEDULE[0]) + timedelta(days=1)
     else:
-        for hr, i in enumerate(PST_TIME_SCHEDULE):
-            if scheduled_last.hour > hr:
+        for i, hr in enumerate(PST_TIME_SCHEDULE):
+            if scheduled_last.hour >= hr:
                 schedule_new = scheduled_last.replace(hour = PST_TIME_SCHEDULE[i+1])
 
 
