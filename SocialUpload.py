@@ -62,14 +62,16 @@ def videoUploadInstagram(video_url, caption="",
     return response
 
 def reelUploadInstagram(video_url, caption="", 
-    schedule = datetime.now() + timedelta(minutes=15)
+    schedule = datetime.now() + timedelta(minutes=15),
+    share_to_feed: bool = True
     ):
     creation_url = "https://graph.facebook.com/v11.0/" + Facebook.IG_USER_ID + "/media"
     data = {
         "caption" : caption,
         "video_url" : video_url,
         "media_type" : "REELS",
-        "access_token" : Facebook.getPageToken()
+        "access_token" : Facebook.getPageToken(),
+        "share_to_feed": share_to_feed
     }
     response = requests.post(creation_url, data=data)
     creation_id = json.loads(response.text)['id'] 
@@ -173,7 +175,6 @@ def mediaUploadDrive(save_path: str, video_title: str):
         "parents" : [{'id': GoogleConfig.DRIVE_PARENT_ID}]
         })
 
-    #f.SetContentFile(os.path.join(path, x))
     f.SetContentFile(save_path)
     f.Upload()
     file_id = f.metadata.get('id')
