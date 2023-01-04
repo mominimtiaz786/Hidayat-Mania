@@ -29,9 +29,9 @@ def uploadYoutube(
     
     request_body = {
         'snippet': {
-            'categoryId': category_id, #int
-            'title': title, #str
-            'description': description, #str
+            'categoryId': category_id,
+            'title': title,
+            'description': description,
             'tags': tags #['Travel', 'video test', 'Travel Tips']
         },
         'status': {

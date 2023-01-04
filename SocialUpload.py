@@ -3,19 +3,14 @@ from datetime import datetime, timedelta
 from config import Facebook, GoogleConfig
 from pydrive.drive import GoogleDrive
 from pydrive.auth import GoogleAuth
+from surah_list import surah_dict
 import os
 import sys
-
-
-app_secret = Facebook.APP_SECRET
-client_id = Facebook.CLIENT_ID
-ig_user_id = Facebook.IG_USER_ID
 
 GRAPH_VIDEO_URL = "https://graph-video.facebook.com/"
 GRAPH_API_URL = "https://graph.facebook.com/v13.0/"
 GRAPH_REEL_URL = "https://rupload.facebook.com/video-upload/v13.0/"
 TOTAL_HASHTAG_SETS = 10
-
 
 def videoUploadFacebook(video_path: str, 
     schedule: datetime = datetime.now() + timedelta(minutes=15),
@@ -185,6 +180,27 @@ def URLFromDriveID(file_id: str) -> str:
     url = "https://drive.google.com/uc?id=" + file_id
     response = requests.get(url)
     return response.url
+
+def generateTitleYoutube(surah_number: int) -> str:
+    title: str = f'Surah ${surah_dict[surah_number]} | '
+    return title + getTitleKeywords(100 - len(title)) 
+
+def getTitleKeywords(available_length: int) -> str:
+    return "Quran Islamic Whatsapp Status | Urdu Hindi | Muslim Tiktok #Shorts"
+
+def getDescriptionGeneral(video_number: int) -> str:
+    TASMIAH_TEXT = "In the Name of Allah, the Beneficent, the Merciful\n"
+    GENERAL_DESCRIPTION = f"Gain a greater appreciation for the wisdom of the Quran with this informative video on Quranic verses of Surah ${surah_dict[video_number]}. This video offers easy-to-follow translations in Hindi, Urdu, and English, making it accessible for all to understand the rich meaning and message of this verse. Discover how this verse relates to the stories of the prophets and the contemporary issues that we face today. Learn about the different interpretations of this verse and how it has impacted the lives of believers throughout history. Whether you are a seasoned Quranic scholar or just starting to learn about Islam, this video has something for everyone. Share it as a WhatsApp or TikTok status and inspire others with the timeless message of the Quran."
+    return TASMIAH_TEXT + GENERAL_DESCRIPTION
+
+def getDescriptionYoutube(video_number: int) -> str:
+    return getDescriptionGeneral(video_number) + \
+        "\n #shorts #quranstatus #urdustatus #qurantranslation #quranvideo"
+
+def getDescriptionInstagram(video_number:int, hashtags: list(str)) -> str:
+    return getDescriptionGeneral(video_number) + \
+        f"Follow @${Facebook.INSTAGRAM_HANDLE} \n"*3 + \
+        " \n ".join(hashtags)
 
 if __name__ == "__main__":
     # response = videoUploadFacebook("1.mp4")

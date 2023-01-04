@@ -1,6 +1,5 @@
 import ezsheets
-import os
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 
 from ayat_compile import ayat_compile_Urdu_English
 from SocialUpload import mediaUploadDrive, TOTAL_HASHTAG_SETS
@@ -15,6 +14,7 @@ ss = ezsheets.Spreadsheet(GoogleConfig.SPREADSHEET_ID)
 
 ayat_sheet = ss['Hidayat Mania']
 stats = ss['Stats']
+insta_sheet = ss['Instagram']
 
 PST_TIME_SCHEDULE = sorted([11, 17, 22])
 
@@ -44,66 +44,6 @@ def scheduleUpdate(scheduled_last):
         schedule_new = scheduleUpdate(str(datetime.now()))
 
     return schedule_new
-
-
-# def dealFacebook():
-#     TOTAL_VIDEOS_FB = int(stats['B6'])
-#     fb_last_uploaded = stats['E6']
-
-#     to_find = TOTAL_VIDEOS_FB + 1
-#     col_to_look = chr(65+ to_find+1)
-
-#     vid_schedule = ayat_sheet[f'{col_to_look}10']
-#     vid_schedule = datetime.strptime(vid_schedule.split('.')[0], '%Y-%m-%d %H:%M:%S')
-#     now = datetime.now()
-
-#     if ( 
-#             ((now - vid_schedule) > timedelta(minutes=5)) and 
-#             (ayat_sheet[f'{col_to_look}11'].lower() != "uploaded")
-#         ):
-#         video_path = ayat_sheet[f'{col_to_look}9']
-#         facebook_page_id= stats['B52']
-#         long_term_page_token=stats['B59']
-        
-#         surah_no = int(ayat_sheet[col_to_look+'2']) 
-#         surah_name = surah_dict[surah_no]
-#         ayat_range = ayat_sheet[col_to_look+'3']
-#         title= surah_name + " : " + ayat_range
-#         description=title
-
-#         r = uploadToFacebook(facebook_page_id,long_term_page_token,video_path,title=title, description=description)
-
-#         #need to be tested
-#         if 'id' in r:
-#             print('id in r')
-#             ayat_sheet[col_to_look+'11'] = 'uploaded'
-#             stats['E6'] = str(datetime.now()).split('.')[0]
-#             stats['B6'] = TOTAL_VIDEOS_FB + 1 
-
-#     ayat_sheet.refresh()
-#     stats.refresh()
-
-# def updateAccessTokens():
-#     if stats['B55'] == '0':
-#         #need to update
-#         short_term_page_token = stats['B57']
-#         client_id = stats['B54']
-#         app_secret = stats['B53']
-#         user, page = shortToLongAccessTokens(client_id, app_secret, short_term_page_token)
-#         stats['58'] = user
-#         stats['59'] = page
-
-#         stats['B56'] = datetime.date.today()
-#         stats['B55'] = 1
-    
-#     elif int(stats['B55']) >0:
-#         date_updated = stats['B56']    
-#         date_updated = datetime.strptime(date_updated,'%Y-%m-%d')
-#         days_dif = datetime.date.today() - date_updated
-#         days_dif = days_dif.days
-#         stats['B55'] = days_dif + 1
-    
-#     stats.refresh()
 
 def getVideoNumber(col_to_look):
     return int(ayat_sheet[f'{col_to_look}1'])
@@ -159,6 +99,9 @@ def generateNameForDrive(video_number, save_path, shedule_to_write ):
     vid_title = f"{vid_title}_Set_{hashtag_set_num}"
     vid_title = vid_title + f"{'_IGTV.mp4' if 'IGTV' in save_path else '.mp4'}"
     return vid_title
+
+def getHashtagSetInstagram(video_number) -> list(str):
+    return insta_sheet.getColumn((video_number % TOTAL_HASHTAG_SETS) + 1)[1:11]
 
 def main():
     TOTAL_VIDEOS_DONE = getTotalVideosDone()

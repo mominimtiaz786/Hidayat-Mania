@@ -11,3 +11,4 @@
 mycreds.txt
 config.*
 __pycache__/*
+!logo.png
