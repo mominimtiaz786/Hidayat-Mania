@@ -12,3 +12,5 @@ mycreds.txt
 config.*
 __pycache__/*
 !logo.png
+edit.py 
+Cookie_Test/*

@@ -5,8 +5,6 @@ from ayat_compile import ayat_compile_Urdu_English
 from SocialUpload import mediaUploadDrive, TOTAL_HASHTAG_SETS
 
 from quranic import getEnglishText, downloadAudioUrdu
-from surah_list import surah_dict
-import re
 from config import GoogleConfig, TOTAL_HASHTAG_SETS
 
 ss = ezsheets.Spreadsheet(GoogleConfig.SPREADSHEET_ID)
@@ -15,6 +13,7 @@ ss = ezsheets.Spreadsheet(GoogleConfig.SPREADSHEET_ID)
 ayat_sheet = ss['Hidayat Mania']
 stats = ss['Stats']
 insta_sheet = ss['Instagram']
+youtube_sheet = ss['Youtube']
 
 PST_TIME_SCHEDULE = sorted([11, 17, 22])
 
@@ -45,6 +44,8 @@ def scheduleUpdate(scheduled_last):
 
     return schedule_new
 
+
+# Sheet Functions **************************
 def getVideoNumber(col_to_look):
     return int(ayat_sheet[f'{col_to_look}1'])
 
@@ -59,15 +60,6 @@ def getVideoCategory(col_to_look):
     vid_catg = ayat_sheet[f'{col_to_look}4']
     return 'general' if not vid_catg else vid_catg
 
-def getLastSchedule():
-    return stats['E5']
-
-def getTotalVideosDone():
-    return int(stats['B5'])
-
-def setTotalVideosDone(total_videos_done):
-    stats['B5'] = total_videos_done + 1
-
 def getColToLook(total_videos_done):
     to_find = total_videos_done + 1
     return ezsheets.getColumnLetterOf(to_find+2)
@@ -75,33 +67,114 @@ def getColToLook(total_videos_done):
 def getStartStatus(col_to_look):
     return ayat_sheet[f'{col_to_look}7'].lower()
 
+def setVideoSchedule(col_to_look, schedule_to_write):
+    ayat_sheet[f'{col_to_look}10'] = str(schedule_to_write)
+
+def getYoutubeTags(total_tags:int=23):
+    return youtube_sheet.getColumn('A')[:total_tags]
+
+# Working Status ***************************
 def getWorkingStatus(col_to_look):
     return ayat_sheet[f'{col_to_look}8']
 
 def setWorkingStatus(col_to_look, value):
     ayat_sheet[f'{col_to_look}8'] = value
 
+
+# Save Path ********************************
 def setVideoSavePath(col_to_look, save_path):
     ayat_sheet[f'{col_to_look}9'] = save_path
 
 def getVideoSavePath(col_to_look):
     return ayat_sheet[f'{col_to_look}9']
 
-def setVideoSchedule(col_to_look, shedule_to_write):
-    ayat_sheet[f'{col_to_look}10'] = str(shedule_to_write)
 
-def setScheduleStats(shedule_to_write):
-    stats['E5'] = str(shedule_to_write)
-    
-def generateNameForDrive(video_number, save_path, shedule_to_write ):
-    hashtag_set_num = (video_number % TOTAL_HASHTAG_SETS) + 1
-    vid_title = re.sub('[:\-\s]','_', str(shedule_to_write).split('.')[0])
-    vid_title = f"{vid_title}_Set_{hashtag_set_num}"
-    vid_title = vid_title + f"{'_IGTV.mp4' if 'IGTV' in save_path else '.mp4'}"
-    return vid_title
+# Drive Status *****************************
+def getDriveStatus(col_to_look):
+    return ayat_sheet[f'{col_to_look}11']
+
+def setDriveStatus(col_to_look, status: str):
+    ayat_sheet[f'{col_to_look}11'] = status
+
+
+# Facebook Status **************************
+def getFacebookStatus(col_to_look):
+    return ayat_sheet[f'{col_to_look}12']
+
+def setFacebookStatus(col_to_look, status: str):
+    ayat_sheet[f'{col_to_look}12'] = status
+
+
+# Instagram Status *************************
+def getInstagramStatus(col_to_look):
+    return ayat_sheet[f'{col_to_look}13']
+
+def setInstagramStatus(col_to_look, status: str):
+    ayat_sheet[f'{col_to_look}13'] = status
+
+
+# Youtube Status ***************************
+def getYoutubeStatus(col_to_look):
+    return ayat_sheet[f'{col_to_look}14']
+
+def setYoutubeStatus(col_to_look, status: str):
+    ayat_sheet[f'{col_to_look}14'] = status
+
+
+# Last Schedule ****************************
+def getLastSchedule():
+    return stats['E5']
+
+def setScheduleStats(schedule_to_write):
+    stats['E5'] = str(schedule_to_write)
+
+# Total Videos *****************************
+def getTotalVideosDone():
+    return int(stats['B5'])
+
+def setTotalVideosDone(total_videos_done):
+    stats['B5'] = total_videos_done + 1
+
+
+
 
 def getHashtagSetInstagram(video_number) -> list(str):
     return insta_sheet.getColumn((video_number % TOTAL_HASHTAG_SETS) + 1)[1:11]
+
+def fetchTextAudio(surah_no, ayat_range):
+    try_no = 0
+    while True:
+        try:
+            try_no += 1
+            texts = getEnglishText(surah_no, ayat_range)
+            audio_list = downloadAudioUrdu(surah_no, ayat_range)
+            break
+        except Exception as e:
+            print(e)
+            if try_no >= 3:
+                raise Exception("TEXT & Audio ISSUE")
+            else:
+                pass
+    return texts, audio_list
+
+def videoCompileProcess(surah_no, ayat_range, texts, audio_list, vid_catg):
+    try_no = 0
+    while True:
+        try:
+            try_no += 1
+            save_path = ayat_compile_Urdu_English(surah_no, ayat_range, texts, audio_list, vid_catg=vid_catg)
+            break
+        except Exception as e:
+            print("Compile Error is -> ",e)
+            if try_no >= 3:
+                raise Exception("Compilation Error")
+            else:
+                pass
+    return save_path
+
+# def handleSocialUploads(save_path, vid_no, schedule_to_write, col_to_look):
+
+#     setDriveStatus(col_to_look, 'Uploaded')
 
 def main():
     TOTAL_VIDEOS_DONE = getTotalVideosDone()
@@ -111,59 +184,37 @@ def main():
     surah_no = getSuratNumber(col_to_look)
     ayat_range = getAyatRange(col_to_look)
     vid_catg = getVideoCategory(col_to_look)
-    vid_start = getStartStatus(col_to_look)
+    start_status = getStartStatus(col_to_look)
 
-    #print(vid_no,fact_title, facts_text, fact_tags, vid_catg, vid_desc, vid_start)
-    
-    if (vid_start == 'yes') :
-        #working status update
+    if (start_status == 'yes') :
 
-        if getWorkingStatus(col_to_look) != 'Compiled':
+        working_status = getWorkingStatus(col_to_look)
+        if  working_status == '':
             setWorkingStatus(col_to_look, 'Under Process')
 
-            try_no = 0
-            while True:
-                try:
-                    try_no += 1
-                    texts = getEnglishText(surah_no, ayat_range)
-                    audio_list = downloadAudioUrdu(surah_no, ayat_range)
-                    break
-                except Exception as e:
-                    print(e)
-                    if try_no >= 3:
-                        raise Exception("TEXT & Audio ISSUE")
-                    else:
-                        pass
+            texts, audio_list = fetchTextAudio(surah_no, ayat_range)
+            save_path = videoCompileProcess(surah_no, ayat_range, texts, audio_list, vid_catg)
 
-            try_no = 0
-            while True:
-                try:
-                    try_no += 1
-                    save_path = ayat_compile_Urdu_English(surah_no, ayat_range, texts, audio_list, vid_catg=vid_catg)
-                    break
-                except Exception as e:
-                    print("Compile Error is -> ",e)
-                    if try_no >= 3:
-                        raise Exception("Compilation Error")
-                    else:
-                        pass
-
-            print(save_path)
-            
             setWorkingStatus(col_to_look, 'Compiled')
             setVideoSavePath(col_to_look, save_path)
-        else:
+        elif working_status == "Compiled":
             save_path = getVideoSavePath(col_to_look)
 
-        shedule_to_write = scheduleUpdate(SCHEDULED_LAST)
-        setVideoSchedule(col_to_look, shedule_to_write)
-        mediaUploadDrive(
-            save_path, 
-            generateNameForDrive(vid_no, save_path, shedule_to_write)
-        )
-        setWorkingStatus(col_to_look, 'Uploaded')
+        schedule_to_write = scheduleUpdate(SCHEDULED_LAST)
+        setVideoSchedule(col_to_look, schedule_to_write)
+        
+        social_params = {
+            "video_number": vid_no,
+            "save_path": save_path,
+            "schedule": schedule_to_write,
+            "surah_number": surah_no,
+            "youtube_tags": getYoutubeTags()
+        }
+
+        # handleSocialUploads(save_path, vid_no, schedule_to_write, col_to_look)
+
         setTotalVideosDone(TOTAL_VIDEOS_DONE)
-        setScheduleStats(shedule_to_write)
+        setScheduleStats(schedule_to_write)
 
     ayat_sheet.refresh()
     stats.refresh()

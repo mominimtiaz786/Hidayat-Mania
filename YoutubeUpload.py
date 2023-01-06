@@ -14,13 +14,13 @@ def serviceName(vid_num: int):
 
 def uploadYoutube(
     filename: str, 
-    thumbnail: str, 
-    category_id: int, 
     title: str, 
     description: str, 
     tags: list, 
     vid_num: int, 
-    schedule: datetime
+    schedule: datetime,
+    category_id: int =22,
+    thumbnail: str =None 
     ):
 
     upload_date_time = (schedule - timedelta(hours=5)).isoformat()# + '.000Z'
@@ -60,12 +60,12 @@ if __name__ == "__main__":
     save_path = '1.mp4'
     uploadYoutube(
         save_path,
-        None, 
-        22, 
         "Quran",
         "Test",
         ["1","2","3"],
         23,
-        datetime.now() + timedelta(hours=2)
+        datetime.now() + timedelta(hours=2),
+        22,
+        None
     )
 
