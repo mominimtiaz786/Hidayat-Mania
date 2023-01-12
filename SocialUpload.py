@@ -11,6 +11,7 @@ import re
 
 GRAPH_VIDEO_URL = "https://graph-video.facebook.com/"
 GRAPH_API_URL = "https://graph.facebook.com/v13.0/"
+GRAPH_API_URL_OLD = "https://graph.facebook.com/v11.0/"
 GRAPH_REEL_URL = "https://rupload.facebook.com/video-upload/v13.0/"
 TOTAL_HASHTAG_SETS = 10
 
@@ -36,7 +37,7 @@ def videoUploadFacebook(video_path: str,
 def videoUploadInstagram(video_url, caption="", 
     schedule = datetime.now() + timedelta(minutes=15)
     ):
-    creation_url = "https://graph.facebook.com/v11.0/" + Facebook.IG_USER_ID + "/media"
+    creation_url = GRAPH_API_URL_OLD + Facebook.IG_USER_ID + "/media"
     data = {
         "caption" : caption,
         "video_url" : video_url,
@@ -45,24 +46,35 @@ def videoUploadInstagram(video_url, caption="",
     }
     response = requests.post(creation_url, data=data)
     creation_id = json.loads(response.text)['id'] 
-    print(creation_id)
 
-    time.sleep(30)
-    publish_url = "https://graph.facebook.com/v11.0/" + Facebook.IG_USER_ID + "/media_publish"
+    status_code = statusCheckInstagram(creation_id)
+    publish_url = GRAPH_API_URL_OLD + Facebook.IG_USER_ID + "/media_publish"
     data = {
         "creation_id" : creation_id,
         "access_token" : Facebook.getPageToken(),
-        # 'scheduled_publish_time': int(schedule.timestamp()),
-        # 'published': False
     }
     response = requests.post(publish_url, data=data)
     return response
+
+def statusCheckInstagram(creation_id):
+    # Check Status
+    status_code = "IN_PROGRESS"
+    status_url = GRAPH_API_URL_OLD + creation_id
+    status_params = {
+        "fields":"status_code,status",
+        "access_token" : Facebook.getPageToken(),
+    }
+    while status_code == "IN_PROGRESS":
+        time.sleep(10)
+        status_reponse = requests.get(status_url, params=status_params).text
+        status_code = json.loads(status_reponse)["status_code"]
+    return status_code
 
 def reelUploadInstagram(video_url, caption="", 
     schedule = datetime.now() + timedelta(minutes=15),
     share_to_feed: bool = True
     ):
-    creation_url = "https://graph.facebook.com/v11.0/" + Facebook.IG_USER_ID + "/media"
+    creation_url = GRAPH_API_URL_OLD + Facebook.IG_USER_ID + "/media"
     data = {
         "caption" : caption,
         "video_url" : video_url,
@@ -72,21 +84,19 @@ def reelUploadInstagram(video_url, caption="",
     }
     response = requests.post(creation_url, data=data)
     creation_id = json.loads(response.text)['id'] 
-    print(creation_id)
+    
+    status_code = statusCheckInstagram(creation_id)
 
-    time.sleep(30)
-    publish_url = "https://graph.facebook.com/v11.0/" + Facebook.IG_USER_ID + "/media_publish"
+    publish_url = GRAPH_API_URL_OLD + Facebook.IG_USER_ID + "/media_publish"
     data = {
         "creation_id" : creation_id,
         "access_token" : Facebook.getPageToken(),
-        # 'scheduled_publish_time': int(schedule.timestamp()),
-        # 'published': False
     }
     response = requests.post(publish_url, data=data)
     return response
 
 def imageUploadInstagram(image_url, caption=""):
-    creation_url = "https://graph.facebook.com/v11.0/" + Facebook.IG_USER_ID + "/media"
+    creation_url = GRAPH_API_URL_OLD + Facebook.IG_USER_ID + "/media"
     data = {
         "caption" : caption,
         "image_url" : image_url,
@@ -94,10 +104,10 @@ def imageUploadInstagram(image_url, caption=""):
     }
     response = requests.post(creation_url, data=data)
     creation_id = json.loads(response.text)['id'] 
-    print(creation_id)
 
-    time.sleep(15)
-    publish_url = "https://graph.facebook.com/v11.0/" + Facebook.IG_USER_ID + "/media_publish"
+    status_code = statusCheckInstagram(creation_id)
+
+    publish_url = GRAPH_API_URL_OLD + Facebook.IG_USER_ID + "/media_publish"
     data = {
         "creation_id" : creation_id,
         "access_token" : Facebook.getPageToken(),
@@ -125,7 +135,6 @@ def reelUploadFacebook(video_file: str, schedule: datetime, description: str =""
     files = {'file': open(video_file, 'rb')}
     print(sys.getsizeof(files))
     response = requests.post(upload_url, data=files, headers=headers)
-    # verify=False
 
     # Step 3
 
@@ -196,11 +205,11 @@ def getDescriptionGeneral(surah_number: int) -> str:
     return TASMIAH_TEXT + GENERAL_DESCRIPTION
 
 def getDescriptionYoutube(surah_number: int) -> str:
-    return getDescriptionGeneral(video_number) + \
+    return getDescriptionGeneral(surah_number) + \
         "\n #shorts #quranstatus #urdustatus #qurantranslation #quranvideo"
 
-def getDescriptionInstagram(surah_number:int, hashtags: list(str)) -> str:
-    return getDescriptionGeneral(video_number) + \
+def getDescriptionInstagram(surah_number:int, hashtags: list[str]) -> str:
+    return getDescriptionGeneral(surah_number) + \
         f"Follow @${Facebook.INSTAGRAM_HANDLE} \n"*3 + \
         " \n ".join(hashtags)
 
@@ -245,7 +254,6 @@ def handleSocialUploads(social_params: dict):
 
 
 if __name__ == "__main__":
-    # response = videoUploadFacebook("1.mp4")
     # response = reelUploadFacebook("2.mp4")
 
     # image_url = "https://drive.google.com/uc?id=1l8H-Gkaqf3lEPNWUrQlLDUnarkMY1Xc0"
@@ -257,5 +265,12 @@ if __name__ == "__main__":
     # response = reelUploadInstagram(response.url)
     # # response = videoUploadInstagram(response.url)
 
-    response = mediaUploadDrive("TESTING.jpeg", "Test_Image.jpeg")
-    print(response)
+    # response = mediaUploadDrive("TESTING.jpeg", "Test_Image.jpeg")
+    # response = videoUploadFacebook("1.mp4")
+    # file_id = mediaUploadDrive(
+    #     "1.mp4", "Test_Video.mp4"
+    # )
+    # file_id = "1MO7ouz3qWRXG8XVbF1paBm9MzFx3wgEY"
+    # if file_id:
+    file_url = URLFromDriveID("1MO7ouz3qWRXG8XVbF1paBm9MzFx3wgEY")
+    # reelUploadInstagram(file_url)
